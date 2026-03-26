@@ -1,0 +1,5 @@
+NITRO_BASE_URL: http://127.0.0.1:3000
+NITRO_BOOT_MODE: embedded
+OPENCLAW_AUTH_KEY: your-auth-key-here
+# 可选：例如 "yarn dev --host 127.0.0.1 --port 3000"
+NITRO_START_COMMAND: ''

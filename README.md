@@ -46,6 +46,20 @@
 - [x] 支持 Cloudflare 部署
 - [x] 开放 API 接口
 
+## OpenClaw Skill（全自动安装）
+
+本仓库内置了 OpenClaw Skill：`skills/wechat-article-exporter`，支持“给 GitHub 链接后自动 bootstrap”。
+
+- 首次安装会自动执行 `scripts/bootstrap.sh`：
+  - 安装依赖
+  - 构建 Nitro 产物
+- 登录后 `auth-key` 自动持久化到 `.data/openclaw-skill/state.json`，后续无需重复手工配置。
+
+仓库中的 Skill 元数据文件：
+
+- `.claude-plugin/plugin.json`
+- `.claude-plugin/marketplace.json`
+
 
 ## :heart: 感谢
 

@@ -1,0 +1,13 @@
+{
+  "name": "wechat-article-exporter",
+  "description": "WeChat article exporter skill for OpenClaw with auto-bootstrap and full local API mapping",
+  "version": "0.1.0",
+  "author": {
+    "name": "wechat-article-exporter",
+    "url": "https://github.com/wechat-article/wechat-article-exporter"
+  },
+  "homepage": "https://github.com/wechat-article/wechat-article-exporter",
+  "repository": "https://github.com/wechat-article/wechat-article-exporter",
+  "license": "MIT",
+  "keywords": ["wechat", "article", "exporter", "openclaw", "skill"]
+}

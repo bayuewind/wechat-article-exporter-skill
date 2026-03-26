@@ -1,0 +1,134 @@
+name: wechat-article-exporter-local
+title: 微信公众号文章导出（本地）
+description: 本地接入 wechat-article-exporter，支持登录、检索、下载与导出能力。
+version: 0.1.0
+author: wechat-article-exporter
+tags:
+  - wechat
+  - exporter
+  - openclaw
+entry: ./src/index.cjs
+
+config_schema:
+  type: object
+  properties:
+    NITRO_BASE_URL:
+      type: string
+      description: Nitro 服务地址，默认使用本地 3000 端口。
+      default: http://127.0.0.1:3000
+    NITRO_BOOT_MODE:
+      type: string
+      description: embedded 会自动拉起 Nitro，external 仅连接已启动服务。
+      enum:
+        - embedded
+        - external
+      default: embedded
+    OPENCLAW_AUTH_KEY:
+      type: string
+      description: 通过扫码登录后获取的 auth-key，用于需要登录态的接口。
+      secret: true
+    NITRO_START_COMMAND:
+      type: string
+      description: 可选，自定义 Nitro 启动命令；未设置时自动选择 .output 或 yarn dev。
+      default: ''
+
+input_schema:
+  type: object
+  properties:
+    action:
+      type: string
+      enum:
+        - session_start
+        - login_get_qrcode
+        - login_scan_status
+        - login_finalize
+        - authkey_validate
+        - logout
+        - search_account
+        - search_account_by_url
+        - list_articles
+        - list_articles_with_credential
+        - download_article
+        - get_comments
+        - get_album
+        - get_authorinfo_beta
+        - get_aboutbiz_beta
+        - get_current_ip
+        - worker_overview_metrics
+        - worker_blocked_ip_list
+        - worker_security_top_n
+      description: 要执行的工具动作名称
+    sid:
+      type: string
+    keyword:
+      type: string
+    begin:
+      type: integer
+      minimum: 0
+    size:
+      type: integer
+      minimum: 1
+    fakeid:
+      type: string
+    url:
+      type: string
+    format:
+      type: string
+      enum:
+        - html
+        - markdown
+        - text
+        - json
+    uin:
+      type: string
+    key:
+      type: string
+    pass_ticket:
+      type: string
+    __biz:
+      type: string
+    comment_id:
+      type: string
+    album_id:
+      type: string
+    is_reverse:
+      type: string
+      enum:
+        - '0'
+        - '1'
+    count:
+      type: integer
+      minimum: 1
+    begin_msgid:
+      type: string
+    begin_itemidx:
+      type: string
+    name:
+      type: string
+  required:
+    - action
+
+output_schema:
+  type: object
+  properties:
+    ok:
+      type: boolean
+    data:
+      type: object
+      additionalProperties: true
+    error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        upstream:
+          type: object
+          additionalProperties: true
+      required:
+        - code
+        - message
+      additionalProperties: true
+  required:
+    - ok
