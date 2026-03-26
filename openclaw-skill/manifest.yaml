@@ -45,8 +45,10 @@ input_schema:
         - authkey_validate
         - logout
         - search_account
+        - add_account_search
         - search_account_by_url
         - list_articles
+        - add_account_sync
         - list_articles_with_credential
         - download_article
         - get_comments
@@ -66,6 +68,9 @@ input_schema:
       type: integer
       minimum: 0
     size:
+      type: integer
+      minimum: 1
+    max_pages:
       type: integer
       minimum: 1
     fakeid:

@@ -12,8 +12,10 @@ const ACTIONS = [
   'authkey_validate',
   'logout',
   'search_account',
+  'add_account_search',
   'search_account_by_url',
   'list_articles',
+  'add_account_sync',
   'list_articles_with_credential',
   'download_article',
   'get_comments',
@@ -59,6 +61,11 @@ const actionInputSchemas = {
     begin: z.coerce.number().int().min(0).default(0),
     size: z.coerce.number().int().min(1).max(20).default(5),
   }),
+  add_account_search: z.object({
+    keyword: z.string().min(1, 'keyword 不能为空'),
+    begin: z.coerce.number().int().min(0).default(0),
+    size: z.coerce.number().int().min(1).max(20).default(5),
+  }),
   search_account_by_url: z.object({
     url: z.string().min(1, 'url 不能为空'),
   }),
@@ -67,6 +74,13 @@ const actionInputSchemas = {
     begin: z.coerce.number().int().min(0).default(0),
     size: z.coerce.number().int().min(1).max(20).default(5),
     keyword: z.string().default(''),
+  }),
+  add_account_sync: z.object({
+    fakeid: z.string().min(1, 'fakeid 不能为空'),
+    begin: z.coerce.number().int().min(0).default(0),
+    size: z.coerce.number().int().min(1).max(20).default(5),
+    keyword: z.string().default(''),
+    max_pages: z.coerce.number().int().min(1).max(100).default(1),
   }),
   list_articles_with_credential: z.object({
     fakeid: z.string().min(1, 'fakeid 不能为空'),
@@ -273,6 +287,47 @@ function createSkillHandler(options = {}) {
         });
         return buildApiSummary(resp.data);
       }
+      case 'add_account_search': {
+        assertAuthKey(config);
+        const resp = await callApi({
+          config,
+          context,
+          path: '/api/public/v1/account',
+          method: 'GET',
+          query: {
+            keyword: actionInput.keyword,
+            begin: actionInput.begin,
+            size: actionInput.size,
+          },
+          expect: 'json',
+          authRequired: true,
+        });
+
+        assertBusinessSuccess(resp.data, `搜索公众号失败(${actionInput.keyword})`);
+        const list = Array.isArray(resp.data?.list) ? resp.data.list : [];
+        const candidates = list.map((item, idx) => ({
+          index: actionInput.begin + idx,
+          fakeid: item.fakeid || '',
+          nickname: item.nickname || '',
+          alias: item.alias || '',
+          service_type: item.service_type,
+          verify_status: item.verify_status,
+          signature: item.signature || '',
+          round_head_img: item.round_head_img || '',
+        }));
+
+        return {
+          keyword: actionInput.keyword,
+          begin: actionInput.begin,
+          size: actionInput.size,
+          total: Number(resp.data?.total || candidates.length),
+          candidates,
+          summary:
+            candidates.length > 0
+              ? `找到 ${candidates.length} 个候选公众号，请选择 fakeid 后调用 add_account_sync`
+              : `未找到与「${actionInput.keyword}」匹配的公众号`,
+        };
+      }
       case 'search_account_by_url': {
         assertAuthKey(config);
         assertWechatUrl(actionInput.url);
@@ -306,6 +361,70 @@ function createSkillHandler(options = {}) {
           authRequired: true,
         });
         return buildApiSummary(resp.data);
+      }
+      case 'add_account_sync': {
+        assertAuthKey(config);
+
+        let begin = actionInput.begin;
+        let pages = 0;
+        let syncedMessages = 0;
+        const articles = [];
+
+        while (pages < actionInput.max_pages) {
+          const resp = await callApi({
+            config,
+            context,
+            path: '/api/public/v1/article',
+            method: 'GET',
+            query: {
+              fakeid: actionInput.fakeid,
+              begin: begin,
+              size: actionInput.size,
+              keyword: actionInput.keyword || '',
+            },
+            expect: 'json',
+            authRequired: true,
+          });
+
+          assertBusinessSuccess(resp.data, `同步公众号文章失败(${actionInput.fakeid})`);
+
+          const pageArticles = Array.isArray(resp.data?.articles) ? resp.data.articles : [];
+          if (pageArticles.length === 0) {
+            break;
+          }
+
+          pages += 1;
+          articles.push(...pageArticles.map(toArticleSummary));
+
+          const pageMessageCount = getMessageCount(pageArticles);
+          if (pageMessageCount <= 0) {
+            break;
+          }
+
+          syncedMessages += pageMessageCount;
+          begin += pageMessageCount;
+
+          if (pageArticles.length < actionInput.size) {
+            break;
+          }
+        }
+
+        return {
+          fakeid: actionInput.fakeid,
+          begin: actionInput.begin,
+          next_begin: begin,
+          size: actionInput.size,
+          keyword: actionInput.keyword || '',
+          max_pages: actionInput.max_pages,
+          synced_pages: pages,
+          synced_messages: syncedMessages,
+          synced_articles: articles.length,
+          articles,
+          summary:
+            pages > 0
+              ? `已同步 ${pages} 页（${syncedMessages} 条消息，${articles.length} 篇文章）`
+              : '未拉取到可同步的文章数据',
+        };
       }
       case 'list_articles_with_credential': {
         const resp = await callApi({
@@ -536,7 +655,12 @@ function createSkillHandler(options = {}) {
       }
     }
 
+    const cookieBefore = serializeCookieJar(runtime.cookieJar);
     updateCookieJar(runtime.cookieJar, getSetCookies(response));
+    const cookieAfter = serializeCookieJar(runtime.cookieJar);
+    if (cookieAfter !== cookieBefore) {
+      await persistState();
+    }
     const cookieAuthKey = runtime.cookieJar.get('auth-key') || '';
     if (cookieAuthKey && cookieAuthKey !== runtime.persistedAuthKey) {
       await persistAuthKey(cookieAuthKey);
@@ -692,6 +816,13 @@ function createSkillHandler(options = {}) {
       if (parsed && typeof parsed.authKey === 'string') {
         runtime.persistedAuthKey = parsed.authKey;
       }
+      if (parsed?.cookieJar && typeof parsed.cookieJar === 'object') {
+        for (const [name, value] of Object.entries(parsed.cookieJar)) {
+          if (typeof name === 'string' && typeof value === 'string' && name && value) {
+            runtime.cookieJar.set(name, value);
+          }
+        }
+      }
     } catch {
       runtime.persistedAuthKey = '';
     }
@@ -703,15 +834,21 @@ function createSkillHandler(options = {}) {
 
   async function persistAuthKey(authKey) {
     runtime.persistedAuthKey = authKey || '';
+    await persistState();
+  }
+
+  async function persistState() {
     try {
       const dir = path.join(projectRoot, '.data/openclaw-skill');
       await fs.mkdir(dir, { recursive: true });
       const statePath = path.join(dir, 'state.json');
+      const cookieJar = Object.fromEntries(runtime.cookieJar.entries());
       await fs.writeFile(
         statePath,
         JSON.stringify(
           {
             authKey: runtime.persistedAuthKey,
+            cookieJar: cookieJar,
             updatedAt: new Date().toISOString(),
           },
           null,
@@ -760,6 +897,37 @@ function assertWechatUrl(rawUrl) {
   if (!WECHAT_ALLOWED_HOSTS.has(parsed.hostname)) {
     throw new SkillError('INVALID_INPUT', '仅允许 mp.weixin.qq.com 或 weixin.qq.com');
   }
+}
+
+function assertBusinessSuccess(data, fallbackMessage) {
+  const ret = data?.base_resp?.ret;
+  if (typeof ret === 'number' && ret !== 0) {
+    throw new SkillError('UPSTREAM_BUSINESS_ERROR', fallbackMessage || '上游业务返回失败', {
+      ret: ret,
+      err_msg: data?.base_resp?.err_msg || '',
+      body: data,
+    });
+  }
+}
+
+function getMessageCount(articles) {
+  if (!Array.isArray(articles) || articles.length === 0) {
+    return 0;
+  }
+  const count = articles.filter(item => Number(item?.itemidx) === 1).length;
+  return count > 0 ? count : articles.length;
+}
+
+function toArticleSummary(article) {
+  return {
+    aid: article?.aid || '',
+    itemidx: Number(article?.itemidx || 0),
+    title: article?.title || '',
+    link: article?.link || '',
+    author_name: article?.author_name || '',
+    create_time: Number(article?.create_time || 0),
+    update_time: Number(article?.update_time || 0),
+  };
 }
 
 async function safeReadJson(response) {

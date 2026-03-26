@@ -26,11 +26,19 @@ node scripts/wechat-exporter-skill.cjs --json '<JSON>'
 - `search_account`
   - required: `keyword`
   - optional: `begin=0`, `size=5` (1-20)
+- `add_account_search`（推荐，模拟“添加公众号-搜索候选”）
+  - required: `keyword`
+  - optional: `begin=0`, `size=5` (1-20)
+  - output: `candidates[]`（含 `fakeid/nickname/alias/...`）+ `summary`
 - `search_account_by_url`
   - required: `url`（仅 `https://mp.weixin.qq.com` / `https://weixin.qq.com`）
 - `list_articles`
   - required: `fakeid`
   - optional: `begin=0`, `size=5`, `keyword=''`
+- `add_account_sync`（推荐，模拟“选中后开始同步文章”）
+  - required: `fakeid`
+  - optional: `begin=0`, `size=5`, `keyword=''`, `max_pages=1`（默认只同步第一页，行为对齐网页“添加”）
+  - output: `synced_pages/synced_messages/synced_articles/articles[]/next_begin`
 - `list_articles_with_credential`
   - required: `fakeid`, `uin`, `key`, `pass_ticket`
   - optional: `begin=0`, `size=10`

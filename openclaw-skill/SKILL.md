@@ -12,7 +12,7 @@
 
 ## 推荐调用流程
 
-1. 登录态可用时：`authkey_validate -> search_account -> list_articles -> download_article`
+1. 登录态可用时：`authkey_validate -> add_account_search -> add_account_sync -> download_article`
 2. 需要扫码时：
    - `session_start`（传 sid）
    - `login_get_qrcode`（返回二维码文件路径）
@@ -30,8 +30,10 @@
   - `logout`
 - 账号与文章：
   - `search_account` (`keyword`, `begin?`, `size?`)
+  - `add_account_search` (`keyword`, `begin?`, `size?`)（对齐“添加公众号”的候选检索）
   - `search_account_by_url` (`url`)
   - `list_articles` (`fakeid`, `begin?`, `size?`, `keyword?`)
+  - `add_account_sync` (`fakeid`, `begin?`, `size?`, `keyword?`, `max_pages?=1`)（默认同步第一页）
   - `list_articles_with_credential` (`fakeid`, `uin`, `key`, `pass_ticket`, `begin?`, `size?`)
 - 下载导出：
   - `download_article` (`url`, `format?=html`)

@@ -88,8 +88,10 @@ node {baseDir}/scripts/wechat-exporter-skill.cjs --json '<JSON>'
   - `logout`
 - 公众号与文章：
   - `search_account`
+  - `add_account_search`（推荐：对齐“添加公众号”第一步）
   - `search_account_by_url`
   - `list_articles`
+  - `add_account_sync`（推荐：对齐“选择后开始同步”）
   - `list_articles_with_credential`
 - 下载导出：
   - `download_article`
@@ -107,6 +109,8 @@ node {baseDir}/scripts/wechat-exporter-skill.cjs --json '<JSON>'
 
 ```bash
 node {baseDir}/scripts/wechat-exporter-skill.cjs --json '{"action":"authkey_validate"}'
+node {baseDir}/scripts/wechat-exporter-skill.cjs --json '{"action":"add_account_search","keyword":"环球旅讯","begin":0,"size":5}'
+node {baseDir}/scripts/wechat-exporter-skill.cjs --json '{"action":"add_account_sync","fakeid":"MTEzMzIzODIyMQ==","begin":0,"size":5,"max_pages":1}'
 node {baseDir}/scripts/wechat-exporter-skill.cjs --json '{"action":"search_account","keyword":"人民日报","begin":0,"size":5}'
 node {baseDir}/scripts/wechat-exporter-skill.cjs --json '{"action":"download_article","url":"https://mp.weixin.qq.com/s/xxxx","format":"markdown"}'
 ```

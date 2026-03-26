@@ -26,6 +26,9 @@
 - 下载/二维码输出：
   - 写入 `.data/openclaw-exports/<yyyyMMdd-HHmmss>/`
   - 返回 `absolute_path`、`size_bytes`、`summary`
+- 公众号“添加”流程能力：
+  - `add_account_search`：按关键字返回候选公众号（供选择）
+  - `add_account_sync`：按 fakeid 启动同步（默认同步第一页，支持 `max_pages`）
 
 ## 本地测试
 
