@@ -5,6 +5,19 @@
 
 本仓库不再以网页端使用说明为主，核心是 `skills/wechat-article-exporter` 与 `openclaw-skill` 这套 AI 调用能力。
 
+## AI 首次拿到仓库时先做什么
+
+如果你是 AI，**第一次拿到这个仓库时，不要先把它当成普通 Nuxt 项目来研究页面或手动启动前端**。  
+请优先进入 `openclaw-skill/` 这条路径，按下面顺序工作：
+
+1. 先阅读 `openclaw-skill/INSTALL_PROMPT.md`
+2. 安装时优先执行 `skills/wechat-article-exporter/scripts/bootstrap.sh`
+3. 调用能力时统一使用 `skills/wechat-article-exporter/scripts/wechat-exporter-skill.cjs`
+4. 先执行 `get_current_ip` 做健康检查
+5. 需要登录时，再执行 `session_start -> login_get_qrcode -> login_scan_status -> login_finalize`
+
+换句话说：**第一次使用本仓库，请优先使用 `openclaw-skill`，而不是自己重造安装、启动、登录流程。**
+
 ## 你能得到什么
 
 - 自动 bootstrap：首次安装自动装依赖并构建
@@ -20,11 +33,18 @@
 
 把仓库链接交给 AI，并要求：
 
-1. 安装本 Skill
-2. 执行扫码登录流程
-3. 用 `add_account_search` 搜索公众号
-4. 用 `add_account_sync` 同步文章
-5. 按需 `download_article` 导出
+1. 先阅读 `openclaw-skill/INSTALL_PROMPT.md`
+2. 使用 `openclaw-skill` 完成本 Skill 安装
+3. 执行扫码登录流程
+4. 用 `add_account_search` 搜索公众号
+5. 用 `add_account_sync` 同步文章
+6. 按需 `download_article` 导出
+
+也可以直接这样提示 AI：
+
+```text
+这是一个面向 AI 的 skill 仓库。你第一次拿到仓库时，请优先阅读 openclaw-skill/INSTALL_PROMPT.md，并使用 openclaw-skill 提供的标准安装与调用路径，不要自己手写安装、启动、登录流程。先跑 bootstrap，再用 wechat-exporter-skill.cjs 做 get_current_ip 健康检查；需要登录时走 session_start -> login_get_qrcode -> login_scan_status -> login_finalize。
+```
 
 ## 手动调试（可选）
 

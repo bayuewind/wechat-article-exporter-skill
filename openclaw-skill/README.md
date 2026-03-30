@@ -6,6 +6,7 @@
 
 - `manifest.yaml`: Skill 元信息、配置和输入输出 schema
 - `SKILL.md`: 行为说明与 action 约定
+- `INSTALL_PROMPT.md`: 给 AI 的“从 GitHub 安装到运行”执行规约
 - `src/index.cjs`: OpenClaw 入口
 - `src/skill-core.cjs`: 核心实现（Nitro 托管、API 调用、校验、导出）
 
